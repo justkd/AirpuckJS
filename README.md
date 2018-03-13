@@ -1,20 +1,20 @@
 # README
 
 ## AirpuckJS
-v 1.0
-2-22-18
-Copyright 2018 notnatural, LLC.
-MIT License
+v 1.0\
+2-22-18\
+Copyright 2018 notnatural, LLC.\
+MIT License\
 
 AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
 
 ### Add Airpuck to your project
 Airpuck can be included via CDN.
-https://cdn.notnatural.co/airpuck.min.js
 
 `<script src="https://cdn.notnatural.co/airpuck.min.js"></script>`
 
 ### Getting your API Key and Base ID
+- Create an Airtable account… there’s a free plan.
 - Go to the Airtable API  - https://airtable.com/api
 - Log in if prompted
 - Select the base you want to work with
