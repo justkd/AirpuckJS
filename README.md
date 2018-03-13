@@ -81,6 +81,7 @@ table.read(function () {
 
 ### Retrieve a Single Record Locally
 `new Airtable.Table.getLocalRecordByIndex(index)`
+
 `new Airtable.Table.getLocalRecordByField(fieldTitle, fieldContents)`
 
 *Access your data by referencing the local database.*
@@ -99,7 +100,9 @@ console.log(localRecordByField);
 
 ### Retrieve a Single Record Remotely
 `new Airtable.Table.getRemoteRecordByIndex(index, callback)`
+
 `new Airtable.Table.getRemoteRecordByField(fieldTitle, fieldContents, callback)`
+
 `new Airtable.Table.getRemoteRecordByRecord(record, callback)`
 
 *Get the record from the Airtable servers.*
@@ -138,6 +141,7 @@ table.getRemoteRecordByIndex(0, function () {
 ```
 ### Sort the Records
 `new Airtable.Table.sortedByDate()`
+
 `new Airtable.Table.sortedByField(fieldTitle)`
 
 *Return a sorted array of records.*
