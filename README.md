@@ -1,15 +1,12 @@
 # README
 
 ## AirpuckJS
-v 1.0
+### AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
 
-2-22-18
-
-Copyright 2018 notnatural, LLC.
-
-MIT License
-
-AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
+*v 1.0*
+*2-22-18*
+*Copyright 2018 notnatural, LLC.*
+*MIT License*
 
 ### Add Airpuck to your project
 Airpuck can be included via CDN.
