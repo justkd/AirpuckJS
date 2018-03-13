@@ -4,8 +4,11 @@
 ### AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
 
 *v 1.0*
+
 *2-22-18*
+
 *Copyright 2018 notnatural, LLC.*
+
 *MIT License*
 
 ### Add Airpuck to your project
