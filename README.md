@@ -22,12 +22,15 @@ Airpuck can be included via CDN.
 - Log in if prompted
 - Select the base you want to work with
 - Check the "Show API Key" box in the top right
-- Check the authentication section, and see something like: 
+- Check the authentication section, and see something like:
+
 `$ curl https://api.airtable.com/v0/appqSRFn3dZxAXIty/Table%201?api_key=keyRvIqKN8I362sB3`
+
 - In the example url above: 
-    Base ID = appqSRFn3dZxAXIty
-    Table Name = Table%201
-    Api Key = keyRvIqKN8I362sB3
+
+    - Base ID = appqSRFn3dZxAXIty
+    - Table Name = Table%201
+    - Api Key = keyRvIqKN8I362sB3
 
 ### Create an object for an Airtable base
 `new Airpuck.Table(options, callback)`
