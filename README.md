@@ -14,8 +14,10 @@ https://cdn.notnatural.co/airpuck.min.js
 
 `<script src="https://cdn.notnatural.co/airpuck.min.js"></script>`
 
-Try it out at:
+
+### Try it out at:
 https://codepen.io/justKD/pen/wmMKJX
+
 
 ### Getting your API Key and Base ID
 - Go to the Airtable API  - https://airtable.com/api
