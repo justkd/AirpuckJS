@@ -1,40 +1,36 @@
 # README
 
 ## AirpuckJS
-### AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
+v 1.0
+2-22-18
+Copyright 2018 notnatural, LLC.
+MIT License
 
-*v 1.0*
-
-*2-22-18*
-
-*Copyright 2018 notnatural, LLC.*
-
-*MIT License*
+AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).
 
 ### Add Airpuck to your project
 Airpuck can be included via CDN.
+https://cdn.notnatural.co/airpuck.min.js
 
 `<script src="https://cdn.notnatural.co/airpuck.min.js"></script>`
 
+Try it out at:
+https://codepen.io/justKD/pen/wmMKJX
+
 ### Getting your API Key and Base ID
-- Create an Airtable account… there’s a free plan.
 - Go to the Airtable API  - https://airtable.com/api
 - Log in if prompted
 - Select the base you want to work with
 - Check the "Show API Key" box in the top right
-- Check the authentication section, and see something like:
-
+- Check the authentication section, and see something like: 
 `$ curl https://api.airtable.com/v0/appqSRFn3dZxAXIty/Table%201?api_key=keyRvIqKN8I362sB3`
-
 - In the example url above: 
-
-    - Base ID = appqSRFn3dZxAXIty
-    - Table Name = Table%201
-    - Api Key = keyRvIqKN8I362sB3
+    Base ID = appqSRFn3dZxAXIty
+    Table Name = Table%201
+    Api Key = keyRvIqKN8I362sB3
 
 ### Create an object for an Airtable base
 `new Airpuck.Table(options, callback)`
-
 *Airpuck requires you to provide a base ID, API key, and the table name.*
 
 The table name is exactly as it appears in your base, with the exception that spaces need to be [escaped](https://www.w3schools.com/tags/ref_urlencode.asp) so it can be used in a URL.
@@ -81,9 +77,7 @@ table.read(function () {
 
 ### Retrieve a Single Record Locally
 `new Airtable.Table.getLocalRecordByIndex(index)`
-
 `new Airtable.Table.getLocalRecordByField(fieldTitle, fieldContents)`
-
 *Access your data by referencing the local database.*
 
 You can access by index:
@@ -100,11 +94,8 @@ console.log(localRecordByField);
 
 ### Retrieve a Single Record Remotely
 `new Airtable.Table.getRemoteRecordByIndex(index, callback)`
-
 `new Airtable.Table.getRemoteRecordByField(fieldTitle, fieldContents, callback)`
-
 `new Airtable.Table.getRemoteRecordByRecord(record, callback)`
-
 *Get the record from the Airtable servers.*
 
 When a successful response is received, the record can be accessed via the `currentRecord` property.
@@ -141,9 +132,7 @@ table.getRemoteRecordByIndex(0, function () {
 ```
 ### Sort the Records
 `new Airtable.Table.sortedByDate()`
-
 `new Airtable.Table.sortedByField(fieldTitle)`
-
 *Return a sorted array of records.*
 
 The local records at `table.records` will remain unchanged (unless you explicitly assign the sorted array to that property).
@@ -156,7 +145,6 @@ console.log(sortByField);
 ```
 ### Add a Record
 `new Airtable.Table.add(record)`
-
 *Create a record and add it to the remote and local tables.*
 
 This will send the record information to the server, 
@@ -215,7 +203,6 @@ table.add(record);
 ```
 ### Update a Record
 `new Airtable.Table.update(record, data, callback)`
-
 *Retrieve a record locally, and pass it to the update function along with the new data.*
 *This will update a record on the server as well as in the local database.*
 
@@ -234,7 +221,6 @@ table.update(record, data, function () {
 ```
 ### Replace a Record
 `new Airtable.Table.replace(record, data, callback)`
-
 *Completely replace an existing record in the remote and local tables.*
 
 If a field is missing, it will be replaced with an empty field.
@@ -249,7 +235,6 @@ table.replace(record, data, function () {
 ```
 ### Delete a Record
 `new Airtable.Table.remove(record, callback)`
-
 *Delete a record from the remote and local tables.*
 
 Identify a record locally and delete it.
