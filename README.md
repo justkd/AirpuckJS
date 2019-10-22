@@ -11,7 +11,7 @@ AirpuckJS can be included via CDN.
 
 
 ## Try it out at:
-https://codepen.io/justKD/pen/wmMKJX
+https://codepen.io/justKD/pen/BaapgZJ
 
 
 ## Getting your API Key and Base ID
