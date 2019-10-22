@@ -3,7 +3,7 @@
 ## AirpuckJS
 v 1.0
 2-22-18
-Copyright 2018 notnatural, LLC.
+Copyright 2019 justKD
 MIT License
 
 AirpuckJS is a vanilla JS helper for [Airtable](https://airtable.com/).

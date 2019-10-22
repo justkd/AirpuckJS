@@ -1,10 +1,9 @@
 /*
- *  Version 1.0
- *  2-22-18
- *  Copyright 2018 notnatural, LLC.
+ *  Version 2.0
+ *  10-18-2019
+ *  Copyright 2019 justKD
  *  MIT License
  */
-
 
 // go to airtable api  - https://airtable.com/api
 // select the base you want to work with
@@ -15,399 +14,411 @@
 // 
 // in the example url above:
 // Base ID = appqSOBn5cZxEXIqj
-// Table Name = Table%201
+// Table Name = Table 1 (unescaped)
 // Api Key = keyRvIqZM7P071sA4
 
-var Airpuck = {
-    /* * * * * * * * * * * */
-    Table: class Table {
-        constructor(options, callback) {
-            this.name = "";
-            this.baseID = "";
-            this.apiKey = "";
+const Airpuck = {
 
-            this.fields = [];
-            this.records = [];
-            this.endpoint = "";
-            this.currentRecord = "";
+    Table: class {
+        /**
+         * Initialization options that can be passed to the `Airpuck.Table()` constuctor.
+         * @typedef {object} AirpuckTableOptions
+         * @property {string} name
+         * @property {string} baseID
+         * @property {string} apiKey
+         */
 
-            if (options) {
-                if (options.constructor === String) {
-                    this.name = options;
-                } else if (options.constructor === Object) {
-                    if (options.name) {
-                        this.name = options.name;
-                    }
-                    if (options.baseID) {
-                        this.baseID = options.baseID;
-                    }
-                    if (options.apiKey) {
-                        this.apiKey = options.apiKey;
-                    }
-                    if (!options.skipInit) {
-                        //console.log("Loading new table...");
-                        Airpuck.initTable(this, function () {
-                            //console.log("New table initialized!");
-                            Airpuck.then(callback);
-                        });
-                    } else {
-                        //console.log("Auto table initialization skipped.");
-                        if (callback) {
-                            //console.log("Initialization callback ignored.");
+        /**
+         * This reflects a specific table in an Airtable base.
+         * @param {AirpuckTableOptions} options - An `AirpuckTableOptions` object or just the table name.`
+         * @param {Function=} onReady - Callback function run after successful table initialization.
+         * @details Will automatically attempt to identify all fields, but the Airtable API does not report empty fields. If no records
+         * have zero empty fields, Airpuck will not be able to accurately identify all fields.
+         */
+        constructor(options, onReady) {
+
+            /** Instance properties. */
+            const _props = {
+                options: {},
+                fields: [],
+                records: [],
+                endpoint: '',
+            }
+
+            /** Instance state. */
+            const _state = {
+                ready: false,
+            }
+
+            /** Set parameters as properties. */
+            const setOptions = (_ => {
+                if (options) {
+                    _props.options.name = options.name
+                    _props.options.baseID = options.baseID
+                    _props.options.apiKey = options.apiKey
+                }
+            })()
+
+            /** Creates a record in Airtable format with known fields. */
+            this.record = class {
+                constructor() {
+                    this.fields = {}
+                    _props.fields.forEach(field => this.fields[field] = '')
+                }
+            }
+
+            /** Helper class to simplify and consolidate XHR calls. */
+            const XHR = class {
+                /**
+                 * Initialization options that can be passed to the `new XHR()` constructor.
+                 * @typedef {object} SimpleXHROptions
+                 * @property {string} endpoint
+                 * @property {string=} bearer
+                 */
+                constructor() {
+
+                    this.endpoint = _props.endpoint
+                    this.bearer = _props.options.apiKey
+                    this.status = null
+                    this.response = null
+
+                    const _request = (type, success, fail, send, recordID) => {
+                        const xhr = new XMLHttpRequest()
+
+                        if (recordID) xhr.open(type, this.endpoint + '/' + recordID)
+                        else xhr.open(type, this.endpoint)
+
+                        xhr.setRequestHeader('Content-Type', 'application/json')
+                        if (this.bearer) xhr.setRequestHeader('Authorization', 'Bearer ' + this.bearer)
+
+                        xhr.onload = _ => {
+                            this.status = xhr.status
+                            if (xhr.status === 200) {
+                                this.response = JSON.parse(xhr.response)
+                                if (success) success()
+                            } else {
+                                console.log(xhr.status)
+                                if (fail) fail()
+                            }
                         }
+
+                        if (send) {
+                            xhr.send(JSON.stringify(send))
+                        } else xhr.send()
                     }
+
+                    this.GET = (success, fail) => _request('GET', success, fail)
+                    this.POST = (send, success, fail) => _request('POST', success, fail, send)
+                    this.PATCH = (recordID, send, success, fail) => _request('PATCH', success, fail, send, recordID)
+                    this.PUT = (recordID, send, success, fail) => _request('PUT', success, fail, send, recordID)
+                    this.DELETE = (recordID, success, fail) => _request('DELETE', success, fail, null, recordID)
                 }
             }
-        }
-        init(callback) {
-            Airpuck.initTable(this, function () {
-                //console.log("New table initialized!");
-                Airpuck.then(callback);
-            });
-        }
-        makeRecord(callback) {
-            let record = Airpuck.makeRecord(this);
-            Airpuck.then(callback);
-            return record;
-        }
-        read(callback) {
-            Airpuck.read(this, callback);
-        }
-        add(record, callback) {
-            Airpuck.add(this, record, callback);
-        }
-        update(record, data, callback) {
-            Airpuck.update(this, record, data, callback);
-        }
-        replace(record, data, callback) {
-            Airpuck.replace(this, record, data, callback);
-        }
-        remove(record, callback) {
-            Airpuck.remove(this, record, callback);
-        }
-        updateLocalRecord(record, callback) {
-            if (this.currentRecord) {
-                this.currentRecord = "";
+
+            /** Hold private functions. */
+            const _private = {
+
+                /** Format a string for URL compliance. */
+                encodeForURL: string => encodeURIComponent(string),
+
+                /** Create the Airtable REST endpoint for the given base and table. */
+                getEndpoint: (baseID, tableName) => "https://api.airtable.com/v0/" + baseID + "/" + _private.encodeForURL(tableName),
+
+                /** Retrieve non-empty fields for the last record with the most populated fields and store in `_props.records`. */
+                getFields: _ => {
+                    if (_props.records.length > 0) {
+                        let record = _props.records[0]
+                        _props.records.forEach(rec => {
+                            if (Object.keys(rec.fields).length > Object.keys(record.fields).length) record = rec
+                        })
+                        _props.fields = Object.keys(record.fields)
+                    }
+                },
+
+                /** Table initialization. The callback is the `onReady` parameter passed to the constructor. */
+                init: callback => {
+                    if (_props.options.name && _props.options.baseID && _props.options.apiKey) {
+                        _props.endpoint = _private.getEndpoint(_props.options.baseID, _props.options.name)
+                        const completeCallback = _ => {
+                            _private.getFields()
+                            callback()
+                        }
+                        _public.pull(completeCallback)
+                    } else console.log('skip init - options required')
+                },
+
+                /** Generate the public API from the `_public` functions. */
+                generateAPI: _ => Object.keys(_api).forEach(key => this[key] = _api[key]),
+
             }
-            Airpuck.updateLocalRecord(this, record, callback);
-        }
-        getLocalRecordByIndex(index) {
-            let record = Airpuck.getLocalRecord.byIndex(this, index);
-            return record;
-        }
-        getLocalRecordByField(field, value) {
-            let record = Airpuck.getLocalRecord.byField(this, field, value);
-            return record;
-        }
-        getRemoteRecordByRecord(record, callback) {
-            if (this.currentRecord) {
-                this.currentRecord = "";
+
+            /** Hold public functions. */
+            const _public = {
+
+                /** 
+                 * Loops until the `new Airtable.table()` initialization sequence is complete or fails if `loop.max` is reached first.
+                 * @param {function=} callback - Function called after successful initialization.
+                 */
+                ready: callback => {
+                    if (_state.ready) callback()
+                    else {
+                        const loop = {
+                            interval: 100,
+                            max: 200,
+                            count: 0,
+                        }
+
+                        setTimeout(_ => {
+                            loop.count++
+                            if (loop.count < loop.max) _public.ready(callback)
+                            else console.log('timeout: could not initialize table')
+                        }, loop.interval)
+                    }
+                },
+
+                /** 
+                 * Returns an array of Airtable records that match the field:value pair.
+                 * @param {string} field - The target field key with exact syntax/capitalization.
+                 * @param {any} value - The value to match.
+                 * @returns {array} An array of Airtable records that match the criteria.
+                 */
+                getRecordsByField: (field, value) => {
+                    const found = []
+                    Object.values(_props.records).forEach(record => {
+                        if (record.fields[field]) {
+                            if (record.fields[field] == value) {
+                                found.push(record)
+                            }
+                        }
+                    })
+                    return found
+                },
+
+                /** 
+                 * Returns an Airtable record whose `id` value matches the passed value. 
+                 * @param {string} id - The `id` of the intended record. If it is unknown, see `getRecordsByField()`.
+                 * @returns {object} An Airtable record object that matches the criteria.
+                 */
+                getRecordByID: id => {
+                    let found = null
+                    Object.values(_props.records).forEach(record => {
+                        if (record.id == id) found = record
+                    })
+                    return found
+                },
+
+                /** 
+                 * Pulls the current data from Airtable and updates the local store found in `table.records()`.
+                 * @param {function=} callback - Function called following successful pull.
+                 */
+                pull: callback => {
+                    if (_props.options.name && _props.options.baseID && _props.options.apiKey) {
+                        const xhr = new XHR()
+                        xhr.GET(_ => {
+                            _props.records = xhr.response.records
+                            if (callback) callback()
+                        }, _ => console.log('pull error'))
+                    } else console.log('pull error - options required')
+                },
+
+                /**
+                 * Add a new record to the table. Must be a valid Airtable object. Automatically updates the local store upon success.
+                 * @param {object} record - An object properly formatted for Airtable. Must have a `fields` property. See `new table.record()`.
+                 * @param {function=} callback - Function called following successful add.
+                 */
+                add: (record, callback) => {
+                    const xhr = new XHR()
+                    xhr.POST(record, _ => {
+                        _props.records[Object.keys(_props.records).length] = xhr.response // update the local store with the new record
+                        if (callback) callback()
+                    }, _ => console.log('add error'))
+                },
+
+                /** 
+                 * Update an existing record. Automatically updates the local store upon success.
+                 * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
+                 * @param {function=} callback - Function called following successful update.
+                 */
+                update: (record, callback) => {
+                    // only try to update if a valid record exists
+                    let found = false
+                    _props.records.forEach(rec => {
+                        if (rec.id == record.id) {
+                            const formattedRecord = {
+                                fields: record.fields,
+                            }
+                            const xhr = new XHR()
+                            xhr.PATCH(record.id, formattedRecord, _ => {
+                                _props.records.forEach(rec => { // update the local store with the changed record
+                                    if (rec.id == record.id) rec.fields = record.fields
+                                })
+                                if (callback) callback
+                            })
+                        }
+                    })
+                    if (!found) console.log('no record found for that id')
+
+                },
+
+                /** Delete an existing record. Automatically updates the local store upon success.
+                 * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
+                 * @param {function=} callback - Function called following successful delete.
+                 */
+                delete: (record, callback) => {
+                    // only try to delete if a valid record exists
+                    let found = false
+                    _props.records.forEach(rec => {
+                        if (rec.id == record.id) {
+                            found = true
+                            const xhr = new XHR()
+                            xhr.DELETE(record.id, _ => {
+                                _props.records.forEach((rec, index) => { // update the local store with by deleting the record
+                                    if (rec.id == record.id) _props.records.splice(index, 1)
+                                })
+                                if (callback) callback()
+                            })
+                        }
+                    })
+                    if (!found) console.log('no record found for that id')
+                },
+
+                /** 
+                 * Format an attachment object that can be passed to attachment fields. Airtable attachment fields require an array of attachment objects.
+                 * @param {string} url - The URL (local or remote) of the attachment file. Airtable will download it and keep its own copy.
+                 * @param {string=} filename - Optionally, you can rename the file before sending it to Airtable.
+                 * @returns {object}
+                 */
+                attachment: (url, filename) => {
+                    const attachment = {
+                        url: url,
+                        filename: filename,
+                    }
+                    return attachment
+                },
+
             }
-            Airpuck.getRemoteRecord.byRecord(this, record, callback);
-        }
-        getRemoteRecordByIndex(index, callback) {
-            if (this.currentRecord) {
-                this.currentRecord = "";
+
+            /** Functions for the public API. */
+            const _api = {
+                pull: callback => _public.pull(callback),
+                ready: callback => _public.ready(callback),
+
+                getRecordsByField: (field, value) => _public.getRecordsByField(field, value),
+                getRecordByID: id => _public.getRecordByID(id),
+
+                add: (record, callback) => _public.add(record, callback),
+                update: (record, callback) => _public.update(record, callback),
+                delete: (record, callback) => _public.delete(record, callback),
+                attachment: (url, filename) => _public.attachment(url, filename),
+
+                records: _ => _props.records,
+                fields: _ => _props.fields,
+                endpoint: _ => _props.endpoint,
+                options: _ => _props.options,
             }
-            Airpuck.getRemoteRecord.byIndex(this, index, callback);
-        }
-        getRemoteRecordByField(field, value, callback) {
-            if (this.currentRecord) {
-                this.currentRecord = "";
-            }
-            Airpuck.getRemoteRecord.byField(this, field, value, callback);
-        }
-        sortedByDate() {
-            let sorted = [];
-            this.records.forEach(function (record) {
-                sorted.push(record);
-            });
-            sorted.sort(function (a, b) {
-                return new Date(b.createdTime) - new Date(a.createdTime);
-            });
-            return sorted;
-        }
-        sortedByField(field) {
-            let sorted = [];
-            this.records.forEach(function (record) {
-                sorted.push(record);
-            });
-            sorted.sort(function (a, b) {
-                var first = a.fields[field];
-                var second = b.fields[field];
-                first = first.toString();
-                first = first.toLowerCase();
-                second = second.toString();
-                second = second.toLowerCase();
-                if (first < second) {
-                    return -1;
-                }
-                if (first > second) {
-                    return 1;
-                }
-                return 0;
+
+            _private.generateAPI()
+            _private.init(_ => {
+                _state.ready = true
+                if (onReady) onReady()
             })
-            return sorted;
+
         }
-        createAttachment(url, filename) {
-            let attachment = Airpuck.createAttachment(url, filename);
-            return attachment;
-        }
+        // END CONSTRUCTOR
     },
-    // end Table class def
-    /* * * * * * * * * * * */
-    then: function (callback) {
-        if (callback) {
-            callback();
-        }
-    },
-    /* * * * * * * * * * * */
-    initTable: function (table, callback) {
-        table.endpoint = Airpuck.getEndpoint(table);
-        Airpuck.read(table, function () {
-            table.records = table.sortedByDate();
-            Airpuck.getFields(table, function () {
-                Airpuck.then(callback);
-            });
-        });
-    },
-    /* * * * * * * * * * * */
-    getEndpoint: function (table) {
-        let url = "https://api.airtable.com/v0/" + table.baseID + "/" + table.name; //"&sortField=_createdTime&sortDirection=asc";
-        return url;
-    },
-    /* * * * * * * * * * * */
-    getFields: function (table, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', table.endpoint + "?maxRecords=1");
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                let response = JSON.parse(xhr.response).records;
-                if (response.length > 0) {
-                    let fields = Object.keys(response[0].fields);
-                    table.fields = fields;
-                }
-                Airpuck.then(callback);
-            } else {
-                console.log("Could not retrieve fields.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send();
-        /* 
-        * * * * * * * * * *
-         Airpuck.getFields(table, callback)
-         
-            - will only work for non-empty fields for the earliest created record
-            - empty fields will not be inlcuded
-        * * * * * * * * * *
-        */
-    },
-    /* * * * * * * * * * * */
-    formatRecordForPost: function (record) {
-        var newRecord = {
-            fields: {}
-        };
-        var keys = Object.keys(record);
-        for (var i in keys) {
-            var thisKey = keys[i];
-            newRecord.fields[thisKey] = record[thisKey];
-        }
-        return newRecord;
-    },
-    /* * * * * * * * * * * */
-    makeRecord: function (table) {
-        var record = {};
-        var keys = table.fields;
-        for (var i in keys) {
-            var thisKey = keys[i];
-            record[thisKey] = "";
-        }
-        return record;
-        /* 
-        * * * * * * * * * *
-         Airpuck.makeRecord(table)
-         
-            table - new Airpuck.Table()
-         
-            - returns an object with keys for each field in table.fields
-        * * * * * * * * * *
-        */
-    },
-    /* * * * * * * * * * * */
-    read: function (table, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', table.endpoint);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                table.records = JSON.parse(xhr.response).records;
-                Airpuck.then(callback);
-            } else {
-                console.log("read() error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send();
-    },
-    /* * * * * * * * * * * */
-    add: function (table, record, callback) {
-        var send = Airpuck.formatRecordForPost(record);
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', table.endpoint);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                Airpuck.getRemoteRecord.byRecord(table, JSON.parse(xhr.response), callback);
-            } else if (xhr.status !== 200) {
-                console.log("add() error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send(JSON.stringify(send));
-    },
-    /* * * * * * * * * * * */
-    update: function (table, record, data, callback) {
-        var send = Airpuck.formatRecordForPost(data);
-        var xhr = new XMLHttpRequest();
-        xhr.open('PATCH', table.endpoint + "/" + record.id);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                Airpuck.updateLocalRecord(table, JSON.parse(xhr.response), callback);
-            } else if (xhr.status !== 200) {
-                console.log("update() error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send(JSON.stringify(send));
-    },
-    updateLocalRecord: function (table, record, callback) {
-        Airpuck.getRemoteRecord.byRecord(table, record, function () {
-            table.records.forEach(function (record, index) {
-                if (record.id == table.currentRecord.id) {
-                    table.records[index] = table.currentRecord;
-                }
-            });
-            Airpuck.then(callback);
-        });
-    },
-    replace: function (table, record, data, callback) {
-        var send = Airpuck.formatRecordForPost(data);
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', table.endpoint + "/" + record.id);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                Airpuck.updateLocalRecord(table, record, callback);
-            } else if (xhr.status !== 200) {
-                console.log("replace() error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send(JSON.stringify(send));
-    },
-    remove: function (table, record, callback) {
-        var send = Airpuck.formatRecordForPost(record);
-        var xhr = new XMLHttpRequest();
-        xhr.open('DELETE', table.endpoint + "/" + record.id);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                table.records.forEach(function (record, index) {
-                    if (record.id == table.currentRecord.id) {
-                        table.records.splice(index, 1);
-                    }
-                });
-                Airpuck.then(callback);
-            } else if (xhr.status !== 200) {
-                console.log("remove() error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send(JSON.stringify(send));
-    },
-    /* * * * * * * * * * * */
-    getLocalRecord: {
-        byIndex: function (table, index) {
-            let record = table.records[index];
-            return record;
-        },
-        byField: function (table, field, value) {
-            var records = table.records;
-            var record;
-            for (var i in records) {
-                var temp = records[i];
-                if (temp.fields[field] == value) {
-                    record = temp;
-                }
-            }
-            return record;
-        }
-        /* 
-        * * * * * * * * * *
-         Airpuck.getLocalRecord.byField(table, field, value);
-         
-            - checks a local array of records in table.records
-            - only reliable if value for the field is unique,
-              otherwise will return when first match is found
-        * * * * * * * * * *
-        */
-    },
-    /* * * * * * * * * * * */
-    getRemoteRecord: {
-        byRecord: function (table, record, callback) {
-            var id = record.id;
-            Airpuck.readRecordByID(table, id, callback);
-        },
-        byIndex: function (table, index, callback) {
-            var record = Airpuck.getLocalRecord.byIndex(table, index);
-            var id = record.id;
-            Airpuck.readRecordByID(table, id, callback);
-        },
-        byField: function (table, field, value, callback) {
-            var record = Airpuck.getLocalRecord.byField(table, field, value);
-            var id = record.id;
-            Airpuck.readRecordByID(table, id, callback);
-        }
-        /* 
-            * * * * * * * * * *
-             Airpuck.getRemoteRecord.byField(table, field, value);
-             
-                - checks the server for an individual record
-                - only reliable if value for the field is unique,
-                  otherwise will return when first match is found
-            * * * * * * * * * *
-        */
-    },
-    readRecordByID: function (table, id, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', table.endpoint + "/" + id);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader("Authorization", "Bearer " + table.apiKey);
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                table.currentRecord = JSON.parse(xhr.response);
-                Airpuck.then(callback);
-            } else {
-                console.log("getRemoteRecord error.");
-                console.log(xhr.status);
-            }
-        };
-        xhr.send();
-    },
-    /* * * * * * * * * * * */
-    createAttachment: function (url, filename) {
-        let record = {
-            url: url,
-            filename: filename
-        }
-        return record;
-    }
+    // END TABLE
+
+    /* ******************** */
+    // JSDoc for public API
+
+    /**
+     * @name Table#pull
+     * @function @memberof Table
+     * @description Pulls the current data from Airtable and updates the local store found in `table.records()`.
+     * @param {function=} callback - Function called following successful pull.
+     */
+
+    /**
+     * @name Table#ready
+     * @function @memberof Table
+     * @description Loops until the `new Airtable.table()` initialization sequence is complete or fails if `loop.max` is reached first.
+     * @param {function=} callback - Function called after successful initialization.
+     */
+
+    /**
+     * @name Table#getRecordsByField
+     * @function @memberof Table
+     * @description Returns an array of Airtable records that match the field:value pair.
+     * @param {string} field - The target field key with exact syntax/capitalization.
+     * @param {any} value - The value to match.
+     * @returns {array} An array of Airtable records that match the criteria.
+     */
+
+    /**
+     * @name Table#getRecordByID
+     * @function @memberof Table
+     * @description Returns an Airtable record whose `id` value matches the passed value. 
+     * @param {string} id - The `id` of the intended record. If it is unknown, see `getRecordsByField()`.
+     * @returns {object} An Airtable record object that matches the criteria.
+     */
+
+
+    /**
+     * @name Table#add
+     * @function @memberof Table
+     * @description Add a new record to the table. Must be a valid Airtable object. Automatically updates the local store upon success.
+     * @param {object} record - An object properly formatted for Airtable. Must have a `fields` property. See `new table.record()`.
+     * @param {function=} callback - Function called following successful add.
+     */
+
+    /**
+     * @name Table#update
+     * @function @memberof Table
+     * @description Update an existing record. Automatically updates the local store upon success.
+     * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
+     * @param {function=} callback - Function called following successful update.
+     */
+
+
+    /**
+     * @name Table#delete
+     * @function @memberof Table
+     * @description Delete an existing record. Automatically updates the local store upon success.
+     * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
+     * @param {function=} callback - Function called following successful delete.
+     */
+
+    /**
+     * @name Table#attachment
+     * @function @memberof Table
+     * @description Format an attachment object that can be passed to attachment fields. Airtable attachment fields require an array of attachment objects.
+     * @param {string} url - The URL (local or remote) of the attachment file. Airtable will download it and keep its own copy.
+     * @param {string=} filename - Optionally, you can rename the file before sending it to Airtable.
+     * @returns {object}
+     */
+
+    /**
+     * @name Table#records
+     * @function @memberof Table
+     * @returns {array} Local record store.
+     */
+
+    /**
+     * @name Table#fields
+     * @function @memberof Table
+     * @returns {array} Known field keys.
+     */
+
+    /**
+     * @name Table#endpoint
+     * @function @memberof Table
+     * @returns {string} Airtable REST endpoint.
+     */
+
+    /**
+     * @name Table#options
+     * @function @memberof Table
+     * @returns {AirpuckTableOptions} Options originally passed to the constructor.
+     */
+
 }
