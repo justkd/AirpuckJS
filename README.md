@@ -67,6 +67,14 @@ table.add(record, _ => {
 })
 ```
 
+### Retrieve an existing record
+Existing records can be retrieved by matching `field:value` pairs. `table.getRecordsByField()` will return an array containing all records that match the criteria. If the `id` of a specific record is already known, `table.getRecordByID()` will return the single, complete record that matches the `id`.
+```
+const records = table.getRecordsByField("Name", "test record")
+const idToReferenceLater = records[0].id
+const record = table.getRecordByID(idToReferenceLater)
+```
+
 ### Update a record
 Requires an existing Airtable record object with a previously assigned `id` property (see `table.getRecordsByField()` or `table.getRecordByID()`).
 
