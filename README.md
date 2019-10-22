@@ -24,10 +24,10 @@ https://codepen.io/justKD/pen/BaapgZJ
 - Check the "Show API Key" box in the top right
 - Check the authentication section, and see something like: 
 `$ curl https://api.airtable.com/v0/appqAIFn2dZxGMIty/Table%201?api_key=keyRvIqOJ3I393sB3`
-- In the example url above: 
-    Base ID = appqAIFn2dZxGMIty
-    Table Name = Table 1 (after removing the escaped space)
-    Api Key = keyRvIqOJ3I393sB3
+- In the example url above:  
+    Base ID = appqAIFn2dZxGMIty  
+    Table Name = Table 1 (after removing the escaped space)  
+    Api Key = keyRvIqOJ3I393sB3  
 
 
 ## Use
