@@ -74,6 +74,18 @@ const records = table.getRecordsByField("Name", "test record")
 const idToReferenceLater = records[0].id
 const record = table.getRecordByID(idToReferenceLater)
 ```
+Returned record objects are formatted by Airtable and are structured as:
+```
+{
+    id: '',
+    createdTime: '',
+    fields: {
+        'Name': '',
+        'etc': '',
+        'and etc: ''
+    }
+}
+```
 
 ### Update a record
 Requires an existing Airtable record object with a previously assigned `id` property (see `table.getRecordsByField()` or `table.getRecordByID()`).
