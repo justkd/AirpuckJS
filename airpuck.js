@@ -10,12 +10,12 @@
 // check show api key
 // check the authentication section, and see something like:
 //
-// $ curl https://api.airtable.com/v0/appqSOBn5cZxEXIqj/Table%201?api_key=keyRvIqZM7P071sA4
+// $ curl https://api.airtable.com/v0/appqAIFn2dZxGMIty/Table%201?api_key=keyRvIqOJ3I393sB3
 // 
 // in the example url above:
-// Base ID = appqSOBn5cZxEXIqj
-// Table Name = Table 1 (unescaped)
-// Api Key = keyRvIqZM7P071sA4
+// Base ID = appqAIFn2dZxGMIty
+// Table Name = able 1 (after removing the escaped space)
+// Api Key = keyRvIqOJ3I393sB3
 
 const Airpuck = {
 
@@ -23,9 +23,9 @@ const Airpuck = {
         /**
          * Initialization options that can be passed to the `Airpuck.Table()` constuctor.
          * @typedef {object} AirpuckTableOptions
-         * @property {string} name
-         * @property {string} baseID
-         * @property {string} apiKey
+         * @property {string} name - The table name exactly as it appears in Airtable.
+         * @property {string} baseID - The ID of the intended base.
+         * @property {string} apiKey - The appropriate API key.
          */
 
         /**
@@ -289,10 +289,9 @@ const Airpuck = {
                  * @returns {object}
                  */
                 attachment: (url, filename) => {
-                    const attachment = {
-                        url: url,
-                        filename: filename,
-                    }
+                    const attachment = {}
+                    attachment.url = url
+                    if (filename) attachment.filename = filename
                     return attachment
                 },
 
@@ -366,7 +365,7 @@ const Airpuck = {
     /**
      * @name Table#add
      * @function @memberof Table
-     * @description Add a new record to the table. Must be a valid Airtable object. Automatically updates the local store upon success.
+     * @description Add a new record to the table. Must be a valid Airtable object. Also updates the local store on success.
      * @param {object} record - An object properly formatted for Airtable. Must have a `fields` property. See `new table.record()`.
      * @param {function=} callback - Function called following successful add.
      */
@@ -374,7 +373,7 @@ const Airpuck = {
     /**
      * @name Table#update
      * @function @memberof Table
-     * @description Update an existing record. Automatically updates the local store upon success.
+     * @description Update an existing record. Also updates the local store on success.
      * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
      * @param {function=} callback - Function called following successful update.
      */
@@ -383,7 +382,7 @@ const Airpuck = {
     /**
      * @name Table#delete
      * @function @memberof Table
-     * @description Delete an existing record. Automatically updates the local store upon success.
+     * @description Delete an existing record. Also updates the local store on success.
      * @param {object} record - An object properly formatted for Airtable. Must have an `id` property. See `getRecordByField()` and `getRecordByID()`.
      * @param {function=} callback - Function called following successful delete.
      */
