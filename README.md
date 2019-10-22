@@ -61,7 +61,7 @@ table.add(record, _ => {
 Airtable attachment fields require attachment objects be passed in an array. An attachment object must contain a URL and may optionally include a new file name. Multiple attachments can be passed in the array. Airtable will download the file at the given URL and keep its own copy. Use `table.attachment()` to create properly formatted attachment objects.
 ```    
 const record = new table.record()
-record.fields['A Text File'] = [table.attachment('//url/for/file.txt', 'optional new file name.jpg')]
+record.fields['A Text File'] = [table.attachment('//url/for/file.txt', 'optional new file name.txt')]
 table.add(record, _ => {
     console.log(table.records())
 })
