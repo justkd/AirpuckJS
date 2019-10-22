@@ -1,4 +1,4 @@
-#AirpuckJS Readme 
+# AirpuckJS Readme
 v 2.0 
 Copyright 2019 justKD 
 MIT License 
@@ -8,7 +8,9 @@ Version 2.0 is a complete re-write. Background processess have been improved and
 
 ## Install
 AirpuckJS can be included via CDN. 
-`<script src="https://cdn.jsdelivr.net/gh/justKD/AirpuckJS@master/airpuck.min.js"></script>`
+```
+<script src="https://cdn.jsdelivr.net/gh/justKD/AirpuckJS@master/airpuck.min.js"></script>
+```
 
 
 ## Try it out at:
