@@ -244,6 +244,7 @@ const Airpuck = {
                     let found = false
                     _props.records.forEach(rec => {
                         if (rec.id == record.id) {
+                            found = true
                             const formattedRecord = {
                                 fields: record.fields,
                             }
