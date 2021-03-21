@@ -26,6 +26,7 @@ const Airpuck = {
          * @property {string} name - The table name exactly as it appears in Airtable.
          * @property {string} baseID - The ID of the intended base.
          * @property {string} apiKey - The appropriate API key.
+         * @property {number} maxRecords - The number of max
          */
 
         /**
@@ -216,7 +217,7 @@ const Airpuck = {
                         const xhr = new XHR()
                         xhr.GET(_ => {
                             _props.records = xhr.response.records
-                            if (callback) callback()
+                            if (callback) callback(xhr.response)
                         }, _ => console.log('pull error'))
                     } else console.log('pull error - options required')
                 },
@@ -230,7 +231,7 @@ const Airpuck = {
                     const xhr = new XHR()
                     xhr.POST(record, _ => {
                         _props.records[Object.keys(_props.records).length] = xhr.response // update the local store with the new record
-                        if (callback) callback()
+                        if (callback) callback(xhr.response)
                     }, _ => console.log('add error'))
                 },
 
@@ -252,7 +253,7 @@ const Airpuck = {
                                 _props.records.forEach(rec => { // update the local store with the changed record
                                     if (rec.id == record.id) rec.fields = record.fields
                                 })
-                                if (callback) callback
+                                if (callback) callback(xhr.response)
                             })
                         }
                     })
@@ -275,7 +276,7 @@ const Airpuck = {
                                 _props.records.forEach((rec, index) => { // update the local store with by deleting the record
                                     if (rec.id == record.id) _props.records.splice(index, 1)
                                 })
-                                if (callback) callback()
+                                if (callback) callback(xhr.response)
                             })
                         }
                     })
